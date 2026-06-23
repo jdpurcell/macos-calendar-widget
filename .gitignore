@@ -1,0 +1,28 @@
+# Build output / DerivedData
+build/
+DerivedData/
+.build/
+.swiftpm/
+
+# XcodeGen-generated (regenerate with `xcodegen generate`)
+*.xcodeproj/
+Widget/Info.plist
+
+# Xcode user state
+xcuserdata/
+*.xcuserstate
+*.xcscmblueprint
+*.xccheckout
+
+# macOS
+.DS_Store
+
+# Local agent / editor settings
+.claude/
+
+# Misc build artifacts
+*.dSYM
+*.dSYM.zip
+*.hmap
+*.ipa
+*.moved-aside
