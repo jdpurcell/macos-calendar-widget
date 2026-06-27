@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -10,6 +11,8 @@ struct MonthWidgetView: View {
     private var titleSize: CGFloat { isLarge ? 16 : 13 }
     private var daySize: CGFloat { isLarge ? 15 : 12 }
     private var todayCircle: CGFloat { isLarge ? 30 : 21 }
+    private var controlIconSize: CGFloat { isLarge ? 12 : 10 }
+    private var controlButtonSize: CGFloat { isLarge ? 23 : 19 }
 
     /// Split the flat 42-cell list into weeks of 7.
     private var weeks: [[DayCell]] {
@@ -22,6 +25,12 @@ struct MonthWidgetView: View {
         VStack(spacing: isLarge ? 8 : 5) {
             header
             weekdayRow
+            monthGrid
+        }
+    }
+
+    private var monthGrid: some View {
+        ZStack {
             // Week rows expand to share all remaining height -> grid fills the widget.
             VStack(spacing: 0) {
                 ForEach(weeks.indices, id: \.self) { i in
@@ -33,37 +42,63 @@ struct MonthWidgetView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
+
+            HStack(spacing: 0) {
+                pageZone(delta: -1, label: "Previous month")
+                pageZone(delta: 1, label: "Next month")
+            }
         }
     }
 
     private var header: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: isLarge ? 8 : 5) {
             Text(entry.title)
                 .font(.system(size: titleSize, weight: .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
-            Spacer(minLength: 4)
+            Spacer(minLength: 2)
 
-            Button(intent: ShiftMonthIntent(delta: -1)) {
-                Image(systemName: "chevron.left")
-            }
-            .buttonStyle(.plain)
+            headerButton(delta: -12, systemName: "chevron.left.2", label: "Previous year")
+            headerButton(delta: -1, systemName: "chevron.left", label: "Previous month")
 
             Button(intent: GoToTodayIntent()) {
                 Image(systemName: "smallcircle.filled.circle")
+                    .font(.system(size: controlIconSize, weight: .semibold))
+                    .frame(width: controlButtonSize, height: controlButtonSize)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .opacity(entry.isCurrentMonth ? 0.4 : 1)
+            .accessibilityLabel("Current month")
 
-            Button(intent: ShiftMonthIntent(delta: 1)) {
-                Image(systemName: "chevron.right")
-            }
-            .buttonStyle(.plain)
+            headerButton(delta: 1, systemName: "chevron.right", label: "Next month")
+            headerButton(delta: 12, systemName: "chevron.right.2", label: "Next year")
         }
         .font(.system(size: isLarge ? 13 : 11, weight: .semibold))
         .foregroundStyle(.secondary)
+    }
+
+    private func headerButton(delta: Int, systemName: String, label: String) -> some View {
+        Button(intent: ShiftMonthIntent(delta: delta)) {
+            Image(systemName: systemName)
+                .font(.system(size: controlIconSize, weight: .semibold))
+                .frame(width: controlButtonSize, height: controlButtonSize)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
+
+    private func pageZone(delta: Int, label: String) -> some View {
+        Button(intent: ShiftMonthIntent(delta: delta)) {
+            Color.clear
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 
     private var weekdayRow: some View {

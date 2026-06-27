@@ -1,55 +1,18 @@
-# macOS Calendar Widget
+# Calendar Widget
 
-A small, **interactive month calendar for the macOS Notification Center** (and the
-desktop) — the thing macOS doesn't ship: a calendar you can actually page through
-month by month, like the Windows taskbar calendar flyout.
+Calendar Widget brings a fast, glanceable month calendar to macOS Notification Center and the desktop. It is made for the small moment when you need to check a date, move a few months ahead, or jump across the year without opening a full calendar app.
 
-Apple's built-in Notification Center calendar widget is view-only (current month,
-no navigation). The older third-party apps that did this (MonthlyCal, Calendarique)
-were built on the deprecated *Today extension* API and no longer load on modern
-macOS. This rebuilds the idea on **WidgetKit + App Intents** — the only interactive
-widget model Apple currently supports.
+The widget stays quiet and lightweight. Today is clearly marked, adjacent-month days stay visible for context, and the controls are tuned for quick navigation: move by month, jump by year, or click the left and right sides of the calendar body to page through time.
 
-## Features
-- Lives in Notification Center / on the desktop (not the menu bar)
-- Page months with ◀ ▶; a "today" button jumps back to the current month
-- Current day highlighted; locale-aware first day of the week
-- Medium and Large sizes
+## Highlights
 
-### Roadmap
-- Events from Calendar.app (mark days that have meetings) — *next*
-- Tap-to-select a date, week numbers, theming
+- Interactive month calendar for Notification Center and desktop widgets
+- Fast month navigation with arrows or broad left/right calendar zones
+- Year jumps with compact double-arrow controls
+- One-click return to the current month
+- Clean native macOS look in Medium and Large sizes
+- Locale-aware weekday order
 
-## Requirements
-- macOS 14+ (interactive widgets); developed on macOS 26
-- Xcode 16 or 26
-- [XcodeGen](https://github.com/yonaskolb/XcodeGen): `brew install xcodegen`
+## Get Calendar Widget
 
-## Build & install
-```sh
-xcodegen generate
-xcodebuild -project CalendarWidget.xcodeproj -scheme CalendarWidget \
-  -configuration Debug -derivedDataPath build CODE_SIGN_IDENTITY="-" build
-cp -R build/Build/Products/Debug/CalendarWidget.app /Applications/
-open /Applications/CalendarWidget.app
-```
-Then open Notification Center → **Edit Widgets** → add **Calendar Widget**
-(Medium or Large).
-
-> If `xcodebuild` reports *"requires Xcode"*, your `xcode-select` points at the
-> Command Line Tools. Either run `sudo xcode-select -s /Applications/Xcode.app`
-> once, or prefix the build with `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer`.
-
-## How it works
-- **Signing:** ad-hoc *"Sign to Run Locally"*, so no Apple Developer account is
-  needed. Because there's no paid team, the widget avoids App Groups and keeps its
-  navigation state inside the extension via `UserDefaults`.
-- **Interactivity:** WidgetKit widgets can't use gestures — only `Button`/`Toggle`
-  bound to App Intents. The ◀ ▶ / today buttons fire intents that update the stored
-  month offset; the system then reloads the timeline and the grid re-renders.
-
-## Project layout
-- `project.yml` — XcodeGen spec (source of truth; the `.xcodeproj` is generated and git-ignored)
-- `App/` — minimal host app (hosts the widget, shows setup instructions)
-- `Widget/` — the WidgetKit extension: widget, timeline provider, App Intents, view
-- `Shared/` — month-grid date math and the shared store
+Download the latest DMG from [GitHub Releases](https://github.com/sgstq/macos-calendar-widget/releases/latest), open it, and drag Calendar Widget into Applications. After opening the app once, add Calendar from Notification Center's widget gallery.
