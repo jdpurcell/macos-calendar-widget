@@ -21,6 +21,7 @@ xcuserdata/
 .claude/
 
 # Misc build artifacts
+dist/
 *.dSYM
 *.dSYM.zip
 *.hmap
