@@ -23,6 +23,61 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Signing is optional: if the certificate secret is absent the workflow
+      # still builds and releases an ad-hoc (unsigned) DMG. See docs/ci-signing.md.
+      - name: Detect signing certificate
+        id: signing
+        env:
+          CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+        run: |
+          if [ -n "${CERT_P12_BASE64:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "Code-signing certificate found — the app will be signed."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::MACOS_CERT_P12_BASE64 is not set — building ad-hoc (unsigned)."
+          fi
+
+      - name: Import signing certificate
+        if: steps.signing.outputs.enabled == 'true'
+        env:
+          CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.MACOS_KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          cert_path="$RUNNER_TEMP/signing.p12"
+          keychain_path="$RUNNER_TEMP/signing.keychain-db"
+
+          printf '%s' "$CERT_P12_BASE64" | base64 --decode > "$cert_path"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+          security set-keychain-settings -lut 21600 "$keychain_path"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain_path"
+
+          security import "$cert_path" -P "$CERT_PASSWORD" -f pkcs12 \
+            -k "$keychain_path" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -k "$KEYCHAIN_PASSWORD" "$keychain_path" >/dev/null
+
+          # Prepend the temporary keychain to the search list so codesign finds it.
+          security list-keychains -d user -s "$keychain_path" \
+            $(security list-keychains -d user | sed 's/[""]//g')
+
+          # NOTE: no -v — a self-signed cert is untrusted (CSSMERR_TP_NOT_TRUSTED),
+          # so it only appears under "Matching identities", not "Valid identities".
+          # codesign can still sign with it.
+          identity="$(security find-identity -p codesigning "$keychain_path" \
+            | grep -m1 -oE '[0-9A-F]{40}')"
+          if [ -z "$identity" ]; then
+            echo "No code-signing identity found in the imported certificate." >&2
+            exit 1
+          fi
+
+          echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+          rm -f "$cert_path"
+
       - name: Prepare release metadata
         id: release
         run: |
@@ -82,11 +137,38 @@ jobs:
             CODE_SIGN_IDENTITY="-" \
             build
 
+      - name: Sign app
+        if: steps.signing.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          app="build/Build/Products/Release/CalendarWidget.app"
+          ext="$app/Contents/PlugIns/MonthWidgetExtension.appex"
+
+          # Sign the embedded widget extension first, then the app itself,
+          # re-applying each target's sandbox entitlements.
+          codesign --force --timestamp=none \
+            --entitlements Widget/Widget.entitlements \
+            --sign "$SIGN_IDENTITY" "$ext"
+          codesign --force --timestamp=none \
+            --entitlements App/App.entitlements \
+            --sign "$SIGN_IDENTITY" "$app"
+
+          codesign --verify --strict --verbose=2 "$app"
+          echo "Signed $app with identity $SIGN_IDENTITY"
+
       - name: Create DMG
         run: |
           ./scripts/create-dmg.sh \
             build/Build/Products/Release/CalendarWidget.app \
             "${{ steps.release.outputs.dmg_path }}"
+
+      - name: Sign DMG
+        if: steps.signing.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          codesign --force --timestamp=none \
+            --sign "$SIGN_IDENTITY" "${{ steps.release.outputs.dmg_path }}"
+          codesign --verify --verbose=2 "${{ steps.release.outputs.dmg_path }}"
 
       - name: Upload DMG artifact
         uses: actions/upload-artifact@v4
@@ -104,3 +186,8 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "Calendar Widget ${{ steps.release.outputs.tag }}" \
             --notes-file release-notes.md
+
+      - name: Clean up keychain
+        if: always() && steps.signing.outputs.enabled == 'true'
+        run: |
+          security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
