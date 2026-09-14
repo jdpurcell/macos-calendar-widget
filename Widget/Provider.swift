@@ -4,6 +4,7 @@ import Foundation
 struct MonthEntry: TimelineEntry {
     let date: Date
     let title: String
+    let shortTitle: String
     let weekdays: [String]
     let cells: [DayCell]
     let isCurrentMonth: Bool
@@ -16,6 +17,7 @@ struct Provider: TimelineProvider {
         return MonthEntry(
             date: Date(),
             title: MonthGrid.title(for: monthStart),
+            shortTitle: MonthGrid.title(for: monthStart, abbreviated: true),
             weekdays: MonthGrid.weekdaySymbols(),
             cells: MonthGrid.cells(for: monthStart),
             isCurrentMonth: offset == 0

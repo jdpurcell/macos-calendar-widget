@@ -6,13 +6,28 @@ struct MonthWidgetView: View {
     let entry: MonthEntry
 
     @Environment(\.widgetFamily) private var family
+    @Environment(\.widgetContentMargins) private var defaultMargins
 
+    private var isSmall: Bool { family == .systemSmall }
     private var isLarge: Bool { family == .systemLarge }
-    private var titleSize: CGFloat { isLarge ? 16 : 13 }
-    private var daySize: CGFloat { isLarge ? 15 : 12 }
-    private var todayCircle: CGFloat { isLarge ? 30 : 21 }
+    private var titleSize: CGFloat { isLarge ? 16 : 12 }
+    private var daySize: CGFloat { isLarge ? 15 : 11 }
+    private var todayCircle: CGFloat { isLarge ? 30 : 18 }
     private var controlIconSize: CGFloat { isLarge ? 12 : 10 }
     private var controlButtonSize: CGFloat { isLarge ? 23 : 19 }
+
+    private var contentMargins: EdgeInsets {
+        // Keep the system's actual margins wherever a tighter layout isn't needed.
+        switch family {
+        case .systemSmall:
+            return EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8)
+        case .systemMedium:
+            return EdgeInsets(top: 8, leading: defaultMargins.leading,
+                              bottom: 8, trailing: defaultMargins.trailing)
+        default:
+            return defaultMargins
+        }
+    }
 
     /// Split the flat 42-cell list into weeks of 7.
     private var weeks: [[DayCell]] {
@@ -27,6 +42,7 @@ struct MonthWidgetView: View {
             weekdayRow
             monthGrid
         }
+        .padding(contentMargins)
     }
 
     private var monthGrid: some View {
@@ -45,22 +61,29 @@ struct MonthWidgetView: View {
 
             HStack(spacing: 0) {
                 pageZone(delta: -1, label: "Previous month")
+                Color.clear
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .allowsHitTesting(false)
+                    .accessibilityHidden(true)
                 pageZone(delta: 1, label: "Next month")
             }
         }
     }
 
     private var header: some View {
-        HStack(spacing: isLarge ? 8 : 5) {
-            Text(entry.title)
+        HStack(spacing: isLarge ? 8 : (isSmall ? 3 : 5)) {
+            Text(isSmall ? entry.shortTitle : entry.title)
                 .font(.system(size: titleSize, weight: .semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
+                .padding(.leading, isSmall ? 5 : 0)
 
             Spacer(minLength: 2)
 
-            headerButton(delta: -12, systemName: "chevron.left.2", label: "Previous year")
+            if !isSmall {
+                headerButton(delta: -12, systemName: "chevron.left.2", label: "Previous year")
+            }
             headerButton(delta: -1, systemName: "chevron.left", label: "Previous month")
 
             Button(intent: GoToTodayIntent()) {
@@ -74,7 +97,9 @@ struct MonthWidgetView: View {
             .accessibilityLabel("Current month")
 
             headerButton(delta: 1, systemName: "chevron.right", label: "Next month")
-            headerButton(delta: 12, systemName: "chevron.right.2", label: "Next year")
+            if !isSmall {
+                headerButton(delta: 12, systemName: "chevron.right.2", label: "Next year")
+            }
         }
         .font(.system(size: isLarge ? 13 : 11, weight: .semibold))
         .foregroundStyle(.secondary)
@@ -106,7 +131,7 @@ struct MonthWidgetView: View {
             ForEach(Array(entry.weekdays.enumerated()), id: \.offset) { _, symbol in
                 Text(symbol)
                     .font(.system(size: isLarge ? 10 : 9, weight: .semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.blue)
                     .frame(maxWidth: .infinity)
             }
         }

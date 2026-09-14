@@ -21,11 +21,11 @@ enum MonthGrid {
     }
 
     /// Localized "June 2026" style title.
-    static func title(for month: Date) -> String {
+    static func title(for month: Date, abbreviated: Bool = false) -> String {
         let df = DateFormatter()
         df.calendar = calendar
         df.locale = .current
-        df.setLocalizedDateFormatFromTemplate("yMMMM")
+        df.setLocalizedDateFormatFromTemplate(abbreviated ? "yMMM" : "yMMMM")
         return df.string(from: month)
     }
 

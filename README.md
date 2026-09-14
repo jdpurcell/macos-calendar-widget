@@ -3,7 +3,7 @@
 Calendar Widget brings a fast, glanceable month calendar to macOS Notification Center and the desktop. It is made for the small moment when you need to check a date, move a few months ahead, or jump across the year without opening a full calendar app.
 
 <p align="center">
-  <img src=".github/assets/demo.gif" alt="Calendar Widget demo" width="420">
+  <img src=".github/assets/screenshot.png" alt="Calendar Widget demo" width="379">
 </p>
 
 The widget stays quiet and lightweight. Today is clearly marked, adjacent-month days stay visible for context, and the controls are tuned for quick navigation: move by month, jump by year, or click the left and right sides of the calendar body to page through time.
@@ -14,7 +14,7 @@ The widget stays quiet and lightweight. Today is clearly marked, adjacent-month 
 - Fast month navigation with arrows or broad left/right calendar zones
 - Year jumps with compact double-arrow controls
 - One-click return to the current month
-- Clean native macOS look in Medium and Large sizes
+- Clean native macOS look in Small, Medium, and Large sizes
 - Locale-aware weekday order
 
 ## Get Calendar Widget

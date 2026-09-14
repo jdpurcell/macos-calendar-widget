@@ -13,8 +13,8 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 10) {
                 row("1.circle.fill", "Click the clock / date in the menu bar to open Notification Center.")
                 row("2.circle.fill", "Scroll to the bottom and click “Edit Widgets”.")
-                row("3.circle.fill", "Find “Calendar” and add the Medium or Large size.")
-                row("4.circle.fill", "Use ‹ and › to change months; the dot jumps back to today.")
+                row("3.circle.fill", "Find “Calendar” and add the Small, Medium, or Large size.")
+                row("4.circle.fill", "Tap the left or right third of the calendar to change months; the dot jumps back to today.")
             }
             .padding(16)
             .background(.quaternary, in: RoundedRectangle(cornerRadius: 12))

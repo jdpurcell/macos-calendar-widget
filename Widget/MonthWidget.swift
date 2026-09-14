@@ -11,7 +11,8 @@ struct MonthCalendarWidget: Widget {
         }
         .configurationDisplayName("Calendar")
         .description("Navigate months from Notification Center, like the Windows taskbar calendar.")
-        .supportedFamilies([.systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .contentMarginsDisabled()
     }
 }
 
