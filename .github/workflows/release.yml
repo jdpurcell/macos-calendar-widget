@@ -2,14 +2,14 @@ name: Release
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v[0-9]*.[0-9]*.[0-9]*'
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-main
+  group: release-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -28,43 +28,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          latest_tag="$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n 1 || true)"
-
-          if [ -z "$latest_tag" ]; then
-            next_tag="v1.0.0"
-            range="HEAD"
-            summary="Initial release"
-          else
-            version="${latest_tag#v}"
-            IFS=. read -r major minor patch <<< "$version"
-            next_tag="v${major}.${minor}.$((patch + 1))"
-            range="${latest_tag}..HEAD"
-            summary="Changes since ${latest_tag}"
-          fi
-
-          if git rev-parse -q --verify "refs/tags/${next_tag}" >/dev/null; then
-            echo "Tag ${next_tag} already exists." >&2
+          tag="$GITHUB_REF_NAME"
+          if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must use vX.Y.Z (for example, v1.2.3)." >&2
             exit 1
           fi
 
           {
-            echo "tag=${next_tag}"
-            echo "dmg_path=dist/CalendarWidget-${next_tag}.dmg"
+            echo "tag=$tag"
+            echo "version=${tag#v}"
+            echo "dmg_path=dist/CalendarWidget-${tag}.dmg"
           } >> "$GITHUB_OUTPUT"
-
-          {
-            echo "## Calendar Widget ${next_tag}"
-            echo
-            echo "${summary}"
-            echo
-            echo "### Changelog"
-            echo
-            git log --format='- %s (%h)' --reverse "$range"
-          } > release-notes.md
-
-          if ! grep -q '^- ' release-notes.md; then
-            echo "- No commit messages found." >> release-notes.md
-          fi
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -73,12 +47,15 @@ jobs:
         run: xcodegen generate
 
       - name: Build app
+        env:
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
         run: |
           xcodebuild \
             -project CalendarWidget.xcodeproj \
             -scheme CalendarWidget \
             -configuration Release \
             -derivedDataPath build \
+            MARKETING_VERSION="$RELEASE_VERSION" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             build
@@ -119,9 +96,9 @@ jobs:
         run: |
           gh release create "${{ steps.release.outputs.tag }}" \
             "${{ steps.release.outputs.dmg_path }}" \
-            --target "$GITHUB_SHA" \
+            --verify-tag \
             --title "Calendar Widget ${{ steps.release.outputs.tag }}" \
-            --notes-file release-notes.md
+            --generate-notes
 
       - name: Clean up signing credentials
         if: always()

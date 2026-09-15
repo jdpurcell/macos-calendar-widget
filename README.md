@@ -25,6 +25,17 @@ Download the latest DMG from [GitHub Releases](https://github.com/jdpurcell/maco
 
 Built with SwiftUI + WidgetKit and generated from `project.yml` via [XcodeGen](https://github.com/yonaskolb/XcodeGen). Releases are built and packaged by [`.github/workflows/release.yml`](.github/workflows/release.yml).
 
+### Release procedure
+
+To publish a release, commit the desired changes, then create and push a version tag:
+
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+Only pushed `vX.Y.Z` tags trigger releases. The workflow builds the tagged commit, uses that version for the app and DMG, and publishes a GitHub release with automatically generated notes after signing and notarization succeed. Ordinary branch pushes do not release anything.
+
 ### Release signing
 
 Configure these GitHub Actions repository secrets:

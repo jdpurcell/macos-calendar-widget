@@ -45,6 +45,7 @@ targets:
       path: Widget/Info.plist
       properties:
         CFBundleDisplayName: Calendar
+        CFBundleShortVersionString: $(MARKETING_VERSION)
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
