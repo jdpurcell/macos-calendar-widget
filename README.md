@@ -19,10 +19,23 @@ The widget stays quiet and lightweight. Today is clearly marked, adjacent-month 
 
 ## Get Calendar Widget
 
-Download the latest DMG from [GitHub Releases](https://github.com/sgstq/macos-calendar-widget/releases/latest), open it, and drag Calendar Widget into Applications. After opening the app once, add Calendar from Notification Center's widget gallery.
-
-> **First launch:** the app is self-signed, not notarized, so macOS flags it as coming from an unidentified developer. Open **System Settings → Privacy & Security**, find the Calendar Widget message near the bottom, and click **Open Anyway** (on older macOS, right-click the app → **Open**). You only need to do this once.
+Download the latest DMG from [GitHub Releases](https://github.com/jdpurcell/macos-calendar-widget/releases/latest), open it, and drag Calendar Widget into Applications. After opening the app once, add Calendar from Notification Center's widget gallery.
 
 ## Development
 
-Built with SwiftUI + WidgetKit and generated from `project.yml` via [XcodeGen](https://github.com/yonaskolb/XcodeGen). Releases are built and packaged by [`.github/workflows/release.yml`](.github/workflows/release.yml); see [docs/ci-signing.md](docs/ci-signing.md) for the code-signing setup.
+Built with SwiftUI + WidgetKit and generated from `project.yml` via [XcodeGen](https://github.com/yonaskolb/XcodeGen). Releases are built and packaged by [`.github/workflows/release.yml`](.github/workflows/release.yml).
+
+### Release signing
+
+Configure these GitHub Actions repository secrets:
+
+| Secret | Value |
+| --- | --- |
+| `APPLE_DEVID_APP_CERT_DATA` | Base64-encoded Developer ID Application certificate and private key exported as a `.p12` |
+| `APPLE_DEVID_APP_CERT_PASS` | Password for the `.p12` |
+| `APPLE_ID_USER` | Apple ID used for notarization |
+| `APPLE_ID_PASS` | App-specific password for that Apple ID |
+
+The workflow signs the widget extension and app with hardened runtime, secure timestamps, and their sandbox entitlements, then creates and signs the DMG. The Team ID is read from the certificate name.
+
+Only the DMG is submitted for notarization. After Apple accepts it, the workflow staples and validates the DMG ticket before publishing. The app is not separately stapled; first launch may require an internet connection.

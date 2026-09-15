@@ -20,9 +20,6 @@ xcuserdata/
 # Local agent / editor settings
 .claude/
 
-# Self-signed cert artifacts from scripts/generate-signing-cert.sh (never commit)
-.signing/
-
 # Misc build artifacts
 dist/
 *.dSYM
